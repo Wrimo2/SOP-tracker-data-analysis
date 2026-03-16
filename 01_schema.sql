@@ -6,7 +6,7 @@
 -- ============================================================================
 
 DROP DATABASE IF EXISTS sop_tracker;
-CREATE DATABASE sop_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE sop_tracker;
 USE sop_tracker;
 
 
