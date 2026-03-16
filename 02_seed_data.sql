@@ -1,8 +1,3 @@
--- ============================================================================
--- SOP COMPLIANCE AND TRAINING TRACKER
--- FILE 2 OF 3: SEED DATA INSERTION
--- Prerequisite: Run 01_schema.sql first.
--- ============================================================================
 
 USE sop_tracker;
 
@@ -12,30 +7,25 @@ USE sop_tracker;
 -- ============================================================================
 
 INSERT INTO employees (full_name, department, designation, date_of_joining, is_active) VALUES
--- Production (3)
 ('Rajesh Kumar',      'Production',  'Production Supervisor',   '2021-03-15', 1),
 ('Anita Sharma',      'Production',  'Machine Operator',        '2022-07-01', 1),
 ('Vikram Singh',      'Production',  'Line Technician',         '2025-06-20', 1),
--- QC (3)
 ('Priya Menon',       'QC',          'QC Analyst',              '2020-11-10', 1),
 ('Suresh Reddy',      'QC',          'QC Manager',              '2019-04-22', 1),
 ('Kavita Joshi',      'QC',          'Lab Technician',          '2023-01-09', 1),
--- QA (3)
 ('Amit Patel',        'QA',          'QA Officer',              '2021-08-30', 1),
 ('Neha Gupta',        'QA',          'Validation Specialist',   '2022-02-14', 1),
 ('Rohan Desai',       'QA',          'QA Manager',              '2018-06-05', 1),
--- Packaging (3)
 ('Sunita Rao',        'Packaging',   'Packaging Operator',      '2023-05-11', 1),
 ('Manoj Tiwari',      'Packaging',   'Packaging Supervisor',    '2020-09-01', 1),
 ('Deepa Nair',        'Packaging',   'Line Inspector',          '2025-08-15', 1),
--- Warehouse (3)
 ('Arjun Mehta',       'Warehouse',   'Warehouse Executive',     '2022-12-01', 1),
 ('Pooja Iyer',        'Warehouse',   'Inventory Analyst',       '2024-03-18', 1),
-('Sanjay Kulkarni',   'Warehouse',   'Warehouse Manager',       '2019-07-25', 0);  -- inactive
+('Sanjay Kulkarni',   'Warehouse',   'Warehouse Manager',       '2019-07-25', 0);
 
 
 -- ============================================================================
--- 2b. SOPs (8 SOPs; two will have revisions applied below)
+-- 2b. SOPs (8 SOPs)
 -- ============================================================================
 
 INSERT INTO sops (sop_number, title, version, effective_date, review_due_date, department, approved_by) VALUES
@@ -51,22 +41,17 @@ INSERT INTO sops (sop_number, title, version, effective_date, review_due_date, d
 
 -- ============================================================================
 -- 2c. SOP REVISIONS (two SOPs revised)
--- Note: The after_sop_revision trigger (created in 01_schema.sql) will
---       automatically bump sops.version and write to revision_log.
 -- ============================================================================
 
 -- SOP-QC-001 revised 1.0 -> 1.1
 INSERT INTO sop_revisions (sop_id, old_version, new_version, revised_on, revised_by, change_note) VALUES
-(3, 1.0, 1.1, '2024-12-01', 'Dr. S. Iyer',
- 'Updated column calibration acceptance criteria per FDA guidance.');
--- Trigger auto-updates sops.version to 1.1
+(3, 1.0, 1.1, '2024-12-01', 'Dr. S. Iyer','Updated column calibration acceptance criteria per FDA guidance.');
 UPDATE sops SET effective_date = '2024-12-01' WHERE sop_id = 3;
 
--- SOP-PRD-001 revised 1.0 -> 2.0
+
 INSERT INTO sop_revisions (sop_id, old_version, new_version, revised_on, revised_by, change_note) VALUES
 (1, 1.0, 2.0, '2025-07-01', 'Dr. R. Verma',
  'Major overhaul to align with Annex-1 2023 requirements; added environmental monitoring section.');
--- Trigger auto-updates sops.version to 2.0
 UPDATE sops SET effective_date = '2025-07-01' WHERE sop_id = 1;
 
 
@@ -75,31 +60,26 @@ UPDATE sops SET effective_date = '2025-07-01' WHERE sop_id = 1;
 -- ============================================================================
 
 INSERT INTO sop_assignments (employee_id, sop_id, assigned_date) VALUES
--- Production employees -> Production SOPs
-(1, 1, '2024-01-20'),   -- Rajesh -> Batch Manufacturing
-(1, 2, '2024-03-05'),   -- Rajesh -> Equipment Cleaning
-(2, 1, '2024-01-20'),   -- Anita  -> Batch Manufacturing
-(2, 2, '2024-03-05'),   -- Anita  -> Equipment Cleaning
-(3, 1, '2025-06-25'),   -- Vikram -> Batch Manufacturing
-(3, 2, '2025-06-25'),   -- Vikram -> Equipment Cleaning
--- QC employees -> QC SOPs
-(4, 3, '2023-06-10'),   -- Priya  -> HPLC
-(4, 4, '2024-05-25'),   -- Priya  -> Stability
-(5, 3, '2023-06-10'),   -- Suresh -> HPLC
-(5, 4, '2024-05-25'),   -- Suresh -> Stability
-(6, 3, '2023-06-10'),   -- Kavita -> HPLC
--- QA employees -> QA SOP
-(7, 5, '2023-09-15'),   -- Amit   -> Change Control
-(8, 5, '2023-09-15'),   -- Neha   -> Change Control
-(9, 5, '2023-09-15'),   -- Rohan  -> Change Control
--- Packaging employees -> Packaging SOP
-(10, 6, '2024-03-01'),  -- Sunita -> Primary Packaging
-(11, 6, '2024-03-01'),  -- Manoj  -> Primary Packaging
-(12, 6, '2025-08-20'),  -- Deepa  -> Primary Packaging
--- Warehouse employees -> Warehouse SOPs
-(13, 7, '2024-07-20'),  -- Arjun  -> Cold Storage
-(13, 8, '2024-08-05'),  -- Arjun  -> Material Receipt
-(14, 7, '2024-07-20');   -- Pooja  -> Cold Storage
+(1, 1, '2024-01-20'),
+(1, 2, '2024-03-05'),   
+(2, 1, '2024-01-20'),   
+(2, 2, '2024-03-05'),  
+(3, 1, '2025-06-25'),  
+(3, 2, '2025-06-25'),  
+(4, 3, '2023-06-10'),   
+(4, 4, '2024-05-25'), 
+(5, 3, '2023-06-10'),   
+(5, 4, '2024-05-25'),
+(6, 3, '2023-06-10'),  
+(7, 5, '2023-09-15'),  
+(8, 5, '2023-09-15'), 
+(9, 5, '2023-09-15'), 
+(10, 6, '2024-03-01'), 
+(11, 6, '2024-03-01'), 
+(12, 6, '2025-08-20'),
+(13, 7, '2024-07-20'), 
+(13, 8, '2024-08-05'), 
+(14, 7, '2024-07-20');  
 
 
 -- ============================================================================
@@ -119,17 +99,11 @@ INSERT INTO training_sessions (sop_id, trainer_name, training_date, mode, notes)
 -- 2f. TRAINING ATTENDANCE
 -- ============================================================================
 
--- Session 1 (Batch Mfg v1.0): Rajesh, Anita attended
 INSERT INTO training_attendance (session_id, employee_id) VALUES (1, 1), (1, 2);
--- Session 2 (Batch Mfg v2.0): Rajesh attended; Anita & Vikram did NOT
 INSERT INTO training_attendance (session_id, employee_id) VALUES (2, 1);
--- Session 3 (HPLC v1.0): Priya, Suresh attended
 INSERT INTO training_attendance (session_id, employee_id) VALUES (3, 4), (3, 5);
--- Session 4 (HPLC v1.1 delta): Priya attended; Suresh & Kavita did NOT
 INSERT INTO training_attendance (session_id, employee_id) VALUES (4, 4);
--- Session 5 (Change Control): Amit, Neha attended; Rohan did NOT
 INSERT INTO training_attendance (session_id, employee_id) VALUES (5, 7), (5, 8);
--- Session 6 (Packaging): Sunita, Manoj attended; Deepa did NOT
 INSERT INTO training_attendance (session_id, employee_id) VALUES (6, 10), (6, 11);
 
 
@@ -192,5 +166,4 @@ UNION ALL SELECT 'revision_log',        COUNT(*)       FROM revision_log;
 
 -- ============================================================================
 -- END OF SEED DATA FILE
--- Next: Run 03_queries.sql to execute analytical queries.
 -- ============================================================================
