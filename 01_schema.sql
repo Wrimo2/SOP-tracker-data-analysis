@@ -24,11 +24,8 @@ CREATE TABLE employees (
     department    VARCHAR(50)   NOT NULL,
     designation   VARCHAR(80)   NOT NULL,
     date_of_joining DATE        NOT NULL,
-    is_active     TINYINT(1)    NOT NULL DEFAULT 1,
-
-    INDEX idx_emp_dept (department),
-    INDEX idx_emp_active (is_active)
-) ENGINE=InnoDB;
+    is_active     TINYINT(1)    NOT NULL DEFAULT 1
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 2: sops
@@ -42,11 +39,8 @@ CREATE TABLE sops (
     effective_date DATE         NOT NULL,
     review_due_date DATE        NOT NULL,
     department    VARCHAR(50)   NOT NULL,
-    approved_by   VARCHAR(120)  NOT NULL,
-
-    INDEX idx_sop_dept (department),
-    INDEX idx_sop_review (review_due_date)
-) ENGINE=InnoDB;
+    approved_by   VARCHAR(120)  NOT NULL
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 3: sop_revisions
@@ -62,9 +56,8 @@ CREATE TABLE sop_revisions (
     change_note   TEXT,
 
     FOREIGN KEY (sop_id) REFERENCES sops(sop_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX idx_rev_sop (sop_id)
-) ENGINE=InnoDB;
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 4: sop_assignments
@@ -80,9 +73,8 @@ CREATE TABLE sop_assignments (
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (sop_id) REFERENCES sops(sop_id)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    UNIQUE KEY uq_emp_sop (employee_id, sop_id),
-    INDEX idx_asgn_sop (sop_id)
-) ENGINE=InnoDB;
+    UNIQUE KEY uq_emp_sop (employee_id, sop_id)
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 5: training_sessions
@@ -97,10 +89,8 @@ CREATE TABLE training_sessions (
     notes         TEXT,
 
     FOREIGN KEY (sop_id) REFERENCES sops(sop_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX idx_ts_sop (sop_id),
-    INDEX idx_ts_date (training_date)
-) ENGINE=InnoDB;
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 6: training_attendance (junction table for session attendees)
@@ -116,7 +106,7 @@ CREATE TABLE training_attendance (
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
         ON UPDATE CASCADE ON DELETE CASCADE,
     UNIQUE KEY uq_session_emp (session_id, employee_id)
-) ENGINE=InnoDB;
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 7: acknowledgements
@@ -133,10 +123,8 @@ CREATE TABLE acknowledgements (
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (sop_id) REFERENCES sops(sop_id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX idx_ack_emp (employee_id),
-    INDEX idx_ack_sop (sop_id)
-) ENGINE=InnoDB;
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 -- ----------------------------------------------------------------------------
 -- Table 8: revision_log
@@ -148,7 +136,7 @@ CREATE TABLE revision_log (
     new_version DECIMAL(3,1)  NOT NULL,
     message     TEXT          NOT NULL,
     logged_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+);
 
 
 -- ============================================================================
