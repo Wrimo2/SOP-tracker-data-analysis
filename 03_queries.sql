@@ -1,74 +1,37 @@
--- ============================================================================
--- SOP COMPLIANCE AND TRAINING TRACKER
--- FILE 3 OF 3: ANALYTICAL QUERIES
--- Prerequisite: Run 01_schema.sql then 02_seed_data.sql first.
--- Requires MySQL 8.0+ (window function support)
--- ============================================================================
 
 USE sop_tracker;
 
-
--- ############################################################################
--- ##                                                                        ##
--- ##               MODERATE DIFFICULTY QUERIES  (MQ1 – MQ6)                 ##
--- ##                                                                        ##
--- ############################################################################
-
-
 -- --------------------------------------------------------------------------
--- MQ1: All employees who joined in the last 1 year and are currently active,
---      sorted by department then joining date.
+-- MQ1: All employees who joined in the last 1 year and are currently active, sorted by department then joining date.
 -- --------------------------------------------------------------------------
-SELECT
-    employee_id,
-    full_name,
-    department,
-    designation,
-    date_of_joining
+SELECT *
 FROM employees
-WHERE is_active = 1
-  AND date_of_joining >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+WHERE is_active = 1 AND date_of_joining >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
 ORDER BY department, date_of_joining;
 
+-- --------------------------------------------------------------------------
+-- MQ2: Total number of SOPs assigned per employee (name, department), only employees with >= 2 assignments.  (GROUP BY + HAVING)
+-- --------------------------------------------------------------------------
+select employee_id, full_name, department
+from employees 
+where employee_id in (
+                      select employee_id
+                      from sop_assignments
+                      group by employee_id 
+                      having count(*) >= 2);
 
 -- --------------------------------------------------------------------------
--- MQ2: Total number of SOPs assigned per employee (name, department),
---      only employees with >= 2 assignments.  (GROUP BY + HAVING)
+-- MQ3: Training sessions in the last 6 months with SOP title and department. 
 -- --------------------------------------------------------------------------
-SELECT
-    e.employee_id,
-    e.full_name,
-    e.department,
-    COUNT(sa.sop_id) AS sops_assigned
-FROM employees e
-JOIN sop_assignments sa ON sa.employee_id = e.employee_id
-GROUP BY e.employee_id, e.full_name, e.department
-HAVING COUNT(sa.sop_id) >= 2
-ORDER BY sops_assigned DESC;
-
+select title, department
+from sops 
+where sop_id in (
+                 select sop_id 
+                 from training_sessions
+                 where training_date >= date_sub(current_date(), interval 6 month));
 
 -- --------------------------------------------------------------------------
--- MQ3: Training sessions in the last 6 months with SOP title and department.
---      (JOIN training_sessions + sops; date filter with DATEDIFF)
--- --------------------------------------------------------------------------
-SELECT
-    ts.session_id,
-    s.sop_number,
-    s.title         AS sop_title,
-    s.department,
-    ts.trainer_name,
-    ts.training_date,
-    ts.mode,
-    ts.notes
-FROM training_sessions ts
-JOIN sops s ON s.sop_id = ts.sop_id
-WHERE ts.training_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-ORDER BY ts.training_date DESC;
-
-
--- --------------------------------------------------------------------------
--- MQ4: Number of acknowledgements per SOP (across all versions),
---      grouped by SOP title, sorted most-to-least.
+-- MQ4: Number of acknowledgements per SOP (across all versions), grouped by SOP title, sorted most-to-least.
 -- --------------------------------------------------------------------------
 SELECT
     s.sop_number,
@@ -76,13 +39,12 @@ SELECT
     COUNT(a.ack_id) AS total_acks
 FROM sops s
 LEFT JOIN acknowledgements a ON a.sop_id = s.sop_id
-GROUP BY s.sop_id, s.sop_number, s.title
+GROUP BY s.sop_number, s.title
 ORDER BY total_acks DESC;
 
 
 -- --------------------------------------------------------------------------
--- MQ5: SOPs that have NEVER been assigned to any employee.
---      (LEFT JOIN + IS NULL)
+-- MQ5: SOPs that have NEVER been assigned to any employee. (LEFT JOIN + IS NULL)
 -- --------------------------------------------------------------------------
 SELECT
     s.sop_id,
@@ -93,10 +55,15 @@ FROM sops s
 LEFT JOIN sop_assignments sa ON sa.sop_id = s.sop_id
 WHERE sa.assignment_id IS NULL;
 
+-- Another way to solve using subquery
 
+select *
+from sops
+where sop_id not in (
+					 select sop_id
+                     from sop_assignments);
 -- --------------------------------------------------------------------------
--- MQ6: Employees who have acknowledged at least one SOP but have NEVER
---      attended any training session.  (NOT EXISTS subquery)
+-- MQ6: Employees who have acknowledged at least one SOP but have NEVER attended any training session.  (NOT EXISTS subquery)
 -- --------------------------------------------------------------------------
 SELECT DISTINCT
     e.employee_id,
@@ -111,6 +78,16 @@ WHERE NOT EXISTS (
 )
 ORDER BY e.full_name;
 
+-- using subquery
+
+select *
+from employees
+where employee_id in (
+                      select employee_id
+                      from acknowledgements) 
+	  AND employee_id not in (
+                              select employee_id
+                              from training_attendance);
 
 -- ############################################################################
 -- ##                                                                        ##
@@ -120,10 +97,8 @@ ORDER BY e.full_name;
 
 
 -- --------------------------------------------------------------------------
--- AQ1: Employees who have NOT acknowledged the latest version of any
---      assigned SOP.
---      Shows: employee name, department, SOP title, required version,
---             last acknowledged version, and status.
+-- AQ1: Employees who have NOT acknowledged the latest version of any assigned SOP.
+-- Shows: employee name, department, SOP title, required version, last acknowledged version, and status.
 -- --------------------------------------------------------------------------
 SELECT
     e.employee_id,
