@@ -1,9 +1,3 @@
--- ============================================================================
--- SOP COMPLIANCE AND TRAINING TRACKER
--- FILE 1 OF 3: DATABASE SCHEMA CREATION
--- Requires MySQL 8.0+
--- Run this file FIRST before seed data or queries.
--- ============================================================================
 
 DROP DATABASE IF EXISTS sop_tracker;
 CREATE DATABASE sop_tracker;
