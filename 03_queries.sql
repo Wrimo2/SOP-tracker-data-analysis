@@ -100,30 +100,21 @@ where employee_id in (
 -- AQ1: Employees who have NOT acknowledged the latest version of any assigned SOP.
 -- Shows: employee name, department, SOP title, required version, last acknowledged version, and status.
 -- --------------------------------------------------------------------------
-SELECT
-    e.employee_id,
-    e.full_name,
+SELECT 
+    e.name,
     e.department,
-    s.sop_number,
-    s.title              AS sop_title,
-    s.version            AS required_version,
-    (SELECT MAX(a.version_acked)
-       FROM acknowledgements a
-      WHERE a.employee_id = e.employee_id
-        AND a.sop_id      = s.sop_id
-    )                    AS last_ack_version,
-    'Pending'            AS ack_status
+    s.sop_code,
+    s.version AS current_version
+
 FROM employees e
-JOIN sop_assignments sa ON sa.employee_id = e.employee_id
-JOIN sops s             ON s.sop_id       = sa.sop_id
+JOIN sop_assignments sa ON e.employee_id = sa.employee_id
+JOIN sops s ON sa.sop_id = s.sop_id
+
 WHERE e.is_active = 1
-  AND NOT EXISTS (
-      SELECT 1 FROM acknowledgements a
-       WHERE a.employee_id   = e.employee_id
-         AND a.sop_id        = s.sop_id
-         AND a.version_acked  = s.version
-  )
-ORDER BY e.department, e.full_name, s.sop_number;
+AND (e.employee_id, s.sop_id, s.version) NOT IN (
+    SELECT employee_id, sop_id, version_acked
+    FROM acknowledgements
+);
 
 
 -- --------------------------------------------------------------------------
@@ -132,31 +123,27 @@ ORDER BY e.department, e.full_name, s.sop_number;
 -- --------------------------------------------------------------------------
 SELECT
     e.department,
-    COUNT(*)                                                  AS total_assignments,
-    SUM(CASE
-            WHEN EXISTS (
-                SELECT 1 FROM acknowledgements a
-                 WHERE a.employee_id   = e.employee_id
-                   AND a.sop_id        = s.sop_id
-                   AND a.version_acked  = s.version
-            ) THEN 1 ELSE 0
-        END)                                                  AS compliant_count,
+    COUNT(*) AS total_assignments,
+    
+    COUNT(CASE 
+            WHEN a.version_acked = s.version THEN 1 
+          END) AS compliant_count,
+    
     ROUND(
-        SUM(CASE
-                WHEN EXISTS (
-                    SELECT 1 FROM acknowledgements a
-                     WHERE a.employee_id   = e.employee_id
-                       AND a.sop_id        = s.sop_id
-                       AND a.version_acked  = s.version
-                ) THEN 1 ELSE 0
-            END) * 100.0 / COUNT(*), 1
-    )                                                         AS compliance_pct
+        COUNT(CASE 
+                WHEN a.version_acked = s.version THEN 1 
+              END) * 100.0 / COUNT(*), 
+    2) AS compliance_rate_pct
+
 FROM employees e
-JOIN sop_assignments sa ON sa.employee_id = e.employee_id
-JOIN sops s             ON s.sop_id       = sa.sop_id
+JOIN sop_assignments sa ON e.employee_id = sa.employee_id
+JOIN sops s ON sa.sop_id = s.sop_id
+LEFT JOIN acknowledgements a 
+    ON a.employee_id = e.employee_id 
+    AND a.sop_id = s.sop_id
+
 WHERE e.is_active = 1
-GROUP BY e.department
-ORDER BY compliance_pct DESC;
+GROUP BY e.department;
 
 
 -- --------------------------------------------------------------------------
@@ -178,7 +165,7 @@ ORDER BY e.department, personal_ack_count DESC;
 
 
 -- --------------------------------------------------------------------------
--- AQ4: SOPs overdue for review (review_due_date < today).
+-- AQ4: SOPs overdue for review.
 -- --------------------------------------------------------------------------
 SELECT
     sop_id,
